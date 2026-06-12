@@ -1,0 +1,10 @@
+{
+  "total": 4520,
+  "train": 4520,
+  "val": 0,
+  "split_by": "country",
+  "formats": [
+    "jsonl"
+  ],
+  "audio_downloaded": 0
+}

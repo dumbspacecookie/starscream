@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.flac
+*.mp3
+*.wav
+corpus/audio/
+corpus/**/*.flac
+corpus/**/*.mp3
+corpus/**/*.wav
+# Export duplicates — commit dataset.jsonl only
+corpus/train.jsonl
+corpus/val.jsonl
+corpus/*.parquet
+corpus/hf_dataset/

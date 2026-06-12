@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch upload — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" class="active" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+
+  <div class="site-wrap narrow">
+    <header class="page-header">
+      <h1>Batch <span>upload</span></h1>
+      <p>Validate and upload many contribution packages at once — via CLI or ZIP upload.</p>
+    </header>
+
+    <div class="card">
+      <h2>CLI workflow</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.75rem">
+        Each package is a directory with <code>manifest.json</code> and its paired raw audio file.
+        Use the <code>starscream-contrib</code> tool from your terminal:
+      </p>
+      <div class="code-block"># Scan a tree of packages and validate all manifests + audio
+starscream-contrib validate-batch ./my-recordings/
+
+# Upload all valid packages to the API
+starscream-contrib upload-batch ./my-recordings/ --api http://localhost:8000
+
+# Optional: write a JSON report after upload
+starscream-contrib upload-batch ./my-recordings/ --report batch-report.json</div>
+      <p style="color:var(--muted);font-size:0.85rem">
+        New to contributions? Run <code>starscream-contrib init ./clip-name</code> to scaffold a manifest.
+        See <a href="/docs/CONTRIBUTING.md">CONTRIBUTING.md</a> for full guidelines.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>ZIP upload (optional)</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">
+        Upload a ZIP archive of contribution packages to
+        <code>POST /v1/contrib/upload-batch</code>. Requires your contributor API key
+        (<a href="/contributors-page">register here</a>).
+      </p>
+      <form id="batchForm">
+        <div class="form-field">
+          <label>API key <span class="req">*</span></label>
+          <input name="api_key" type="password" required autocomplete="off" placeholder="From contributor registration" />
+        </div>
+        <div class="form-field">
+          <label>ZIP archive <span class="req">*</span></label>
+          <input name="archive" type="file" accept=".zip,application/zip" required />
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <button type="button" class="btn secondary" id="validateBtn">Validate only</button>
+          <button type="submit" class="btn" id="uploadBtn">Upload batch</button>
+        </div>
+      </form>
+      <div id="batchStatus" class="status-box"></div>
+      <div id="batchResults"></div>
+    </div>
+  </div>
+
+  <script>
+    const batchForm = document.getElementById("batchForm");
+    const batchStatus = document.getElementById("batchStatus");
+    const batchResults = document.getElementById("batchResults");
+    const validateBtn = document.getElementById("validateBtn");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    function showStatus(msg, type) {
+      batchStatus.className = "status-box " + type;
+      batchStatus.textContent = msg;
+    }
+
+    function renderResults(data) {
+      const results = data.results || [];
+      if (!results.length) {
+        batchResults.innerHTML = "";
+        return;
+      }
+      batchResults.innerHTML = `
+        <div style="margin-top:1.25rem">
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:0.75rem">
+            ${data.total ?? results.length} package(s) ·
+            ${data.valid != null ? `${data.valid} valid` : ""}
+            ${data.uploaded != null ? ` · ${data.uploaded} uploaded` : ""}
+            ${data.failed != null ? ` · ${data.failed} failed` : ""}
+          </p>
+          <ul class="similar-list">
+            ${results.map(r => `
+              <li>
+                <div>
+                  <div class="title">${esc(r.title) || esc(r.manifest_path) || "Package"}</div>
+                  <div class="meta">${esc(r.manifest_path || "")}</div>
+                  ${(r.errors || []).length ? `<div class="meta" style="color:var(--err)">${esc(r.errors.join("; "))}</div>` : ""}
+                </div>
+                <span class="tag">${esc(r.status)}</span>
+              </li>
+            `).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    async function submitBatch(validateOnly) {
+      const file = batchForm.archive.files[0];
+      if (!file) return showStatus("Select a ZIP archive first", "err");
+
+      const body = new FormData();
+      body.append("archive", file);
+
+      const headers = {};
+      if (!validateOnly) {
+        const apiKey = batchForm.api_key.value.trim();
+        if (!apiKey) return showStatus("API key required for upload", "err");
+        headers["X-API-Key"] = apiKey;
+      }
+
+      const url = validateOnly ? "/v1/contrib/validate-batch" : "/v1/contrib/upload-batch";
+      const btn = validateOnly ? validateBtn : uploadBtn;
+      btn.disabled = true;
+      uploadBtn.disabled = true;
+      validateBtn.disabled = true;
+      showStatus(validateOnly ? "Validating ZIP…" : "Uploading batch…", "warn");
+      batchResults.innerHTML = "";
+
+      try {
+        const res = await fetch(url, { method: "POST", headers, body });
+        const data = await res.json();
+
+        if (res.ok) {
+          const summary = validateOnly
+            ? `${data.valid}/${data.total} valid`
+            : `${data.uploaded} uploaded, ${data.failed} failed (of ${data.total})`;
+          showStatus(summary, data.failed > 0 || (validateOnly && data.invalid > 0) ? "warn" : "ok");
+          renderResults(data);
+        } else {
+          const detail = data.detail;
+          const err = Array.isArray(detail) ? detail.join("; ") : (detail || res.statusText);
+          showStatus("Request failed: " + err, "err");
+        }
+      } catch (e) {
+        showStatus("Network error: " + e.message, "err");
+      } finally {
+        validateBtn.disabled = false;
+        uploadBtn.disabled = false;
+      }
+    }
+
+    validateBtn.addEventListener("click", () => submitBatch(true));
+    batchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitBatch(false);
+    });
+  </script>
+</body>
+</html>

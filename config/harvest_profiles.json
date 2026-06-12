@@ -1,0 +1,108 @@
+{
+  "metadata_light": {
+    "sources": "inaturalist,xeno-canto,internet-archive,noaa,nasa",
+    "pages": 10,
+    "page_size": 50,
+    "download": false
+  },
+  "freesound_metadata": {
+    "sources": "freesound",
+    "pages": 20,
+    "page_size": 50,
+    "download": false
+  },
+  "catalog_build": {
+    "sources": "freesound,inaturalist",
+    "pages": 50,
+    "page_size": 100,
+    "download": false
+  },
+  "mirror_build": {
+    "sources": "freesound,inaturalist",
+    "pages": 50,
+    "page_size": 100,
+    "download": true
+  },
+  "bio_index": {
+    "sources": "xeno-canto,inaturalist",
+    "pages": 30,
+    "page_size": 50,
+    "download": false
+  },
+  "noaa_nasa_seed": {
+    "sources": "noaa,nasa",
+    "pages": 1,
+    "page_size": 50,
+    "download": false
+  },
+  "raw_world_xc_birds": {
+    "jobs": [
+      {"source": "xeno-canto", "query": "grp:birds", "pages": 20, "page_size": 100}
+    ],
+    "download": false
+  },
+  "raw_world_xc_all": {
+    "jobs": [
+      {"source": "xeno-canto", "query": "grp:birds", "pages": 15, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:bats", "pages": 10, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:frogs", "pages": 10, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:grasshoppers", "pages": 8, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:soundscapes", "pages": 10, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:\"land mammals\"", "pages": 8, "page_size": 100}
+    ],
+    "download": false
+  },
+  "raw_world_field_ia": {
+    "jobs": [
+      {
+        "source": "internet-archive",
+        "query": "mediatype:audio (\"field recording\" OR nature OR forest OR rain OR ocean OR ambient OR bird OR insect OR frog OR whale)",
+        "pages": 25,
+        "page_size": 50
+      }
+    ],
+    "download": false
+  },
+  "raw_world_podcasts_cc": {
+    "jobs": [
+      {
+        "source": "internet-archive",
+        "query": "mediatype:audio licenseurl:*creativecommons.org/licenses/by* (podcast OR episode OR npr OR pri OR radio)",
+        "pages": 20,
+        "page_size": 50
+      },
+      {
+        "source": "internet-archive",
+        "query": "mediatype:audio licenseurl:*creativecommons.org/licenses/by-nc* (podcast OR episode OR npr OR pri)",
+        "pages": 15,
+        "page_size": 50
+      }
+    ],
+    "download": false
+  },
+  "raw_world_full": {
+    "jobs": [
+      {"source": "xeno-canto", "query": "grp:birds", "pages": 12, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:bats", "pages": 8, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:frogs", "pages": 8, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:grasshoppers", "pages": 6, "page_size": 100},
+      {"source": "xeno-canto", "query": "grp:soundscapes", "pages": 8, "page_size": 100},
+      {"source": "inaturalist", "pages": 20, "page_size": 50},
+      {
+        "source": "internet-archive",
+        "query": "mediatype:audio (\"field recording\" OR nature OR forest OR rain OR ocean OR ambient OR bird OR insect)",
+        "pages": 15,
+        "page_size": 50
+      },
+      {
+        "source": "internet-archive",
+        "query": "mediatype:audio licenseurl:*creativecommons.org/licenses/by* (podcast OR episode OR npr OR pri)",
+        "pages": 10,
+        "page_size": 50
+      },
+      {"source": "noaa", "pages": 1, "page_size": 50},
+      {"source": "nasa", "pages": 1, "page_size": 50}
+    ],
+    "download": false
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "total_recordings": 4520,
+  "with_local_audio": 13,
+  "pointer_only": 4507,
+  "by_source": {
+    "nasa": 35,
+    "internet-archive": 2432,
+    "inaturalist": 2024,
+    "noaa": 16,
+    "contributor": 13
+  },
+  "by_license": {
+    "pointer-only": 4022,
+    "CC0": 86,
+    "public-domain": 51,
+    "CC-BY": 361
+  },
+  "top_taxonomy_codes": {
+    "WILDLIFE.BIRD": 1824,
+    "NATURAL": 1039,
+    "CULTURAL": 336,
+    "WILDLIFE.MAMMAL": 326,
+    "URBAN.TRAFFIC": 263,
+    "ATMOSPHERIC.RAIN": 219,
+    "NATURAL.OCEAN": 165,
+    "NATURAL.FOREST": 107,
+    "URBAN.CROWD": 87,
+    "WILDLIFE.INSECT": 64,
+    "EXTRATERRESTRIAL": 35,
+    "ATMOSPHERIC.THUNDER": 19,
+    "AQUATIC": 16,
+    "URBAN": 13,
+    "MECHANICAL": 6
+  },
+  "grounding": {
+    "grounded_count": 4520,
+    "grounded_pct": 100.0,
+    "weak_source_object_count": 250,
+    "weak_source_object_pct": 5.5
+  },
+  "top_source_objects": [
+    {
+      "object": "podcast",
+      "count": 698
+    },
+    {
+      "object": "the",
+      "count": 115
+    },
+    {
+      "object": "licensed",
+      "count": 94
+    },
+    {
+      "object": "gray treefrog",
+      "count": 69
+    },
+    {
+      "object": "npr",
+      "count": 59
+    },
+    {
+      "object": "common chaffinch",
+      "count": 52
+    },
+    {
+      "object": "song thrush",
+      "count": 36
+    },
+    {
+      "object": "common chiffchaff",
+      "count": 35
+    },
+    {
+      "object": "eurasian blackcap",
+      "count": 30
+    },
+    {
+      "object": "eurasian blackbird",
+      "count": 29
+    },
+    {
+      "object": "pri",
+      "count": 27
+    },
+    {
+      "object": "red-eyed vireo",
+      "count": 25
+    },
+    {
+      "object": "common cuckoo",
+      "count": 24
+    },
+    {
+      "object": "european robin",
+      "count": 24
+    },
+    {
+      "object": "wood thrush",
+      "count": 23
+    }
+  ],
+  "samples_by_source": {
+    "contributor": [
+      {
+        "id": "34eeb247-c8ff-40bf-807b-b933726f33af",
+        "source": "contributor",
+        "title": "E2E door close 98d6aae0",
+        "source_object": "solid oak interior door with brass latch",
+        "source_action": "closing from half-open, latch clicking into frame",
+        "license": "CC0",
+        "has_audio": true,
+        "external_url": null,
+        "taxonomy_code": "URBAN",
+        "wm_object_category": "furniture",
+        "wm_interaction_type": "impact"
+      },
+      {
+        "id": "c7dba897-4397-45ac-a70d-bf719d8ac87d",
+        "source": "contributor",
+        "title": "E2E dedup first 0983f211",
+        "source_object": "solid oak interior door with brass latch",
+        "source_action": "closing from half-open, latch clicking into frame",
+        "license": "CC0",
+        "has_audio": true,
+        "external_url": null,
+        "taxonomy_code": "URBAN",
+        "wm_object_category": "furniture",
+        "wm_interaction_type": "impact"
+      },
+      {
+        "id": "ab675d8d-3576-49f2-8adb-b7accb9b5d17",
+        "source": "contributor",
+        "title": "E2E spatial c34382e7",
+        "source_object": "solid oak interior door with brass latch",
+        "source_action": "closing from half-open, latch clicking into frame",
+        "license": "CC0",
+        "has_audio": true,
+        "external_url": null,
+        "taxonomy_code": "URBAN",
+        "wm_object_category": "furniture",
+        "wm_interaction_type": "impact"
+      }
+    ],
+    "inaturalist": [
+      {
+        "id": "23a7229f-74b5-4d79-a11a-aacb46e2533c",
+        "source": "inaturalist",
+        "title": "Spotted Towhee \u2014 iNaturalist #370939392",
+        "source_object": "Spotted Towhee",
+        "source_action": "producing sound",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://www.inaturalist.org/observations/370939392",
+        "taxonomy_code": "WILDLIFE.BIRD",
+        "wm_object_category": "organism",
+        "wm_interaction_type": "producing sound"
+      },
+      {
+        "id": "8659bfe9-f12a-4c58-9b7c-e0df9e337538",
+        "source": "inaturalist",
+        "title": "European Goldfinch \u2014 iNaturalist #370934992",
+        "source_object": "European Goldfinch",
+        "source_action": "producing sound",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://www.inaturalist.org/observations/370934992",
+        "taxonomy_code": "WILDLIFE.BIRD",
+        "wm_object_category": "organism",
+        "wm_interaction_type": "producing sound"
+      },
+      {
+        "id": "a452252b-6b5f-441b-b217-b3b6e2806388",
+        "source": "inaturalist",
+        "title": "Song Thrush \u2014 iNaturalist #370932875",
+        "source_object": "Song Thrush",
+        "source_action": "vocalizing",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://www.inaturalist.org/observations/370932875",
+        "taxonomy_code": "WILDLIFE.BIRD",
+        "wm_object_category": "organism",
+        "wm_interaction_type": "vocalizing"
+      }
+    ],
+    "internet-archive": [
+      {
+        "id": "6c018aa6-0243-400b-98b0-69ef178c50c9",
+        "source": "internet-archive",
+        "title": "26 Oct 20: Spotee on Shares",
+        "source_object": "podcast",
+        "source_action": "producing sound",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://archive.org/details/jo3k3dgzqunbsb6lyjznbziveztxkw9u3sbbbfel",
+        "taxonomy_code": "NATURAL",
+        "wm_object_category": "environment",
+        "wm_interaction_type": "producing sound"
+      },
+      {
+        "id": "c3411f25-ea4a-45e3-b19c-0dbe0eb3ee4e",
+        "source": "internet-archive",
+        "title": "Debbie Reynolds on Carrie Fischer and Dating Gay Men in Hollywood",
+        "source_object": "podcast",
+        "source_action": "producing sound",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://archive.org/details/nbldwa46nrfxlocebsc221ihljn2x2pxf72wy7m9",
+        "taxonomy_code": "ATMOSPHERIC.RAIN",
+        "wm_object_category": "environment",
+        "wm_interaction_type": "producing sound"
+      },
+      {
+        "id": "b827aa67-01c5-4504-b11b-774dadc5a888",
+        "source": "internet-archive",
+        "title": "ZENPod Season 5,episode 4(part 2)with Sharanjeet Shan",
+        "source_object": "podcast",
+        "source_action": "producing sound",
+        "license": "pointer-only",
+        "has_audio": false,
+        "external_url": "https://archive.org/details/s02ec5lsf7mhwy2348ztqlyv6kp7yvygyp6ivakr",
+        "taxonomy_code": "ATMOSPHERIC.RAIN",
+        "wm_object_category": "environment",
+        "wm_interaction_type": "producing sound"
+      }
+    ],
+    "nasa": [
+      {
+        "id": "06fe2a7a-3102-499d-980d-215daecd18fe",
+        "source": "nasa",
+        "title": "Voyager Interstellar Plasma Waves",
+        "source_object": "Voyager 1",
+        "source_action": "plasma_waves",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.nasa.gov/historical-sounds/",
+        "taxonomy_code": "EXTRATERRESTRIAL",
+        "wm_object_category": "extraterrestrial",
+        "wm_interaction_type": "plasma_waves"
+      },
+      {
+        "id": "cc43b312-1ed0-427a-a388-7b5b2218885e",
+        "source": "nasa",
+        "title": "LCROSS Water on the Moon",
+        "source_object": "LCROSS",
+        "source_action": "mission_comms",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.nasa.gov/historical-sounds/",
+        "taxonomy_code": "EXTRATERRESTRIAL",
+        "wm_object_category": "extraterrestrial",
+        "wm_interaction_type": "mission_comms"
+      },
+      {
+        "id": "a30e9d9f-f50d-4d7a-8b42-85e0d2d62196",
+        "source": "nasa",
+        "title": "JFK We Choose to Go to the Moon",
+        "source_object": "Apollo program",
+        "source_action": "speech",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.nasa.gov/historical-sounds/",
+        "taxonomy_code": "EXTRATERRESTRIAL",
+        "wm_object_category": "extraterrestrial",
+        "wm_interaction_type": "speech"
+      }
+    ],
+    "noaa": [
+      {
+        "id": "8015bcd4-5fc6-45cd-900a-b6d55a5e9fe6",
+        "source": "noaa",
+        "title": "NCEI Passive Acoustic Data Collection",
+        "source_object": "passive acoustic archive",
+        "source_action": "catalog",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.ncei.noaa.gov/products/passive-acoustic-data",
+        "taxonomy_code": "AQUATIC",
+        "wm_object_category": "aquatic",
+        "wm_interaction_type": "catalog"
+      },
+      {
+        "id": "1afd13b7-bd08-4ce4-8daf-f1bfa6d44eb6",
+        "source": "noaa",
+        "title": "Damselfish \u2014 American Samoa Hydrophone",
+        "source_object": "damselfish",
+        "source_action": "territorial_call",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.pmel.noaa.gov/acoustics/multimedia.html",
+        "taxonomy_code": "AQUATIC",
+        "wm_object_category": "aquatic",
+        "wm_interaction_type": "territorial_call"
+      },
+      {
+        "id": "afffafb0-4e24-4412-8472-a0a66ec572fa",
+        "source": "noaa",
+        "title": "Humpback with Ship \u2014 American Samoa",
+        "source_object": "Megaptera novaeangliae",
+        "source_action": "producing sound",
+        "license": "public-domain",
+        "has_audio": false,
+        "external_url": "https://www.pmel.noaa.gov/acoustics/multimedia.html",
+        "taxonomy_code": "AQUATIC",
+        "wm_object_category": "aquatic",
+        "wm_interaction_type": "producing sound"
+      }
+    ]
+  },
+  "notes": [
+    "weak_source_object: single common word (the, npr, pri, \u2026) \u2014 review grounding",
+    "CC-BY-NC and POINTER_ONLY rows are metadata pointers; no local audio",
+    "Run validate_export_sample.py on exported JSONL for row-level checks"
+  ]
+}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ingest Stream — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+  <style>
+    body { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .controls { display: grid; gap: 0.75rem; margin-bottom: 1rem; }
+    .controls label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
+    .controls input { padding: 0.5rem; border-radius: 6px; border: 1px solid #1e2430; background: #12151c; color: #e8eaed; }
+    .row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    #log {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.8rem;
+      background: #12151c;
+      border: 1px solid #1e2430;
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 320px;
+      max-height: 60vh;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+    .status { margin-bottom: 0.75rem; color: #8b939f; }
+    .status.ok { color: #3dd68c; }
+    .status.err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Ingest <span>Stream</span></h1>
+      <p>Debug WebSocket feed at <code>/v1/stream/ingest</code></p>
+    </div>
+    <nav><a href="/explore">Explore</a></nav>
+  </header>
+
+  <div class="controls">
+    <div class="row">
+      <label>Taxonomy prefix<input id="taxonomy" placeholder="WILDLIFE" /></label>
+      <label>Lat<input id="lat" type="number" step="any" placeholder="40.758" /></label>
+      <label>Lng<input id="lng" type="number" step="any" placeholder="-73.985" /></label>
+      <label>Radius km<input id="radius_km" type="number" step="any" placeholder="50" /></label>
+    </div>
+    <div class="row">
+      <button id="connect">Connect</button>
+      <button id="disconnect" disabled>Disconnect</button>
+      <button id="clear">Clear log</button>
+    </div>
+  </div>
+
+  <div id="status" class="status">Disconnected</div>
+  <div id="log"></div>
+
+  <script>
+    const logEl = document.getElementById("log");
+    const statusEl = document.getElementById("status");
+    let socket = null;
+
+    function append(line) {
+      logEl.textContent += line + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(text, ok) {
+      statusEl.textContent = text;
+      statusEl.className = "status" + (ok === true ? " ok" : ok === false ? " err" : "");
+    }
+
+    function buildUrl() {
+      const params = new URLSearchParams();
+      const taxonomy = document.getElementById("taxonomy").value.trim();
+      const lat = document.getElementById("lat").value.trim();
+      const lng = document.getElementById("lng").value.trim();
+      const radius = document.getElementById("radius_km").value.trim();
+      if (taxonomy) params.set("taxonomy", taxonomy);
+      if (lat) params.set("lat", lat);
+      if (lng) params.set("lng", lng);
+      if (radius) params.set("radius_km", radius);
+      const qs = params.toString();
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      return `${proto}//${location.host}/v1/stream/ingest${qs ? "?" + qs : ""}`;
+    }
+
+    document.getElementById("connect").onclick = () => {
+      if (socket) socket.close();
+      const url = buildUrl();
+      append(`Connecting to ${url}`);
+      socket = new WebSocket(url);
+      socket.onopen = () => {
+        setStatus("Connected", true);
+        document.getElementById("connect").disabled = true;
+        document.getElementById("disconnect").disabled = false;
+      };
+      socket.onmessage = (event) => {
+        append(event.data);
+      };
+      socket.onerror = () => setStatus("WebSocket error", false);
+      socket.onclose = () => {
+        setStatus("Disconnected");
+        document.getElementById("connect").disabled = false;
+        document.getElementById("disconnect").disabled = true;
+        socket = null;
+      };
+    };
+
+    document.getElementById("disconnect").onclick = () => {
+      if (socket) socket.close();
+    };
+
+    document.getElementById("clear").onclick = () => {
+      logEl.textContent = "";
+    };
+  </script>
+</body>
+</html>

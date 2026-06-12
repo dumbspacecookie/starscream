@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stats — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats" class="active">Stats</a>
+    </div>
+  </nav>
+
+  <div class="site-wrap">
+    <header class="page-header">
+      <h1>Corpus <span>stats</span></h1>
+      <p>Global coverage and catalog totals from the Starscream API.</p>
+    </header>
+
+    <div id="stats">
+      <div class="loading">Loading stats…</div>
+    </div>
+  </div>
+
+  <script>
+    const statsEl = document.getElementById("stats");
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    function fmt(n) {
+      if (n == null) return "—";
+      return Number(n).toLocaleString();
+    }
+
+    function fmtGb(gb) {
+      if (gb == null || gb === 0) return "0 GB";
+      return gb < 0.01 ? "< 0.01 GB" : gb.toFixed(2) + " GB";
+    }
+
+    const STAT_DEFS = [
+      { key: "total_recordings", label: "Recordings", fmt },
+      { key: "total_contributions", label: "Contributions", fmt },
+      { key: "total_sources", label: "Sources", fmt },
+      { key: "countries_covered", label: "Countries", fmt },
+      { key: "taxonomy_branches", label: "Taxonomy branches", fmt },
+      { key: "total_tags", label: "Tags", fmt },
+      { key: "storage_flac_gb", label: "FLAC storage", fmt: fmtGb },
+    ];
+
+    async function load() {
+      try {
+        const res = await fetch("/v1/stats");
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+
+        statsEl.innerHTML = `
+          <div class="stats-grid">
+            ${STAT_DEFS.map(s => `
+              <div class="stat-card">
+                <div class="value">${s.fmt(data[s.key])}</div>
+                <div class="label">${esc(s.label)}</div>
+              </div>
+            `).join("")}
+          </div>
+          <p style="margin-top:1.5rem;text-align:center;color:var(--muted);font-size:0.85rem">
+            <a href="/explore">Browse the catalog</a> · <a href="/upload">Contribute a sound</a>
+          </p>
+        `;
+      } catch (e) {
+        statsEl.innerHTML = `<div class="error">Failed to load stats: ${esc(e.message)}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

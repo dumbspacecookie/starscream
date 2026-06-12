@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recording — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+  <style>
+    .hero-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .hero-object { color: var(--accent); font-size: 1rem; }
+    .hero-action { color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem; }
+    .coords { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+    .quality { color: var(--ok); font-size: 0.9rem; }
+    .desc { color: var(--muted); font-size: 0.95rem; margin-top: 0.75rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+
+  <div class="site-wrap">
+    <div id="content">
+      <div class="loading">Loading recording…</div>
+    </div>
+  </div>
+
+  <script>
+    const content = document.getElementById("content");
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    function stars(q) {
+      if (!q) return "";
+      return "★".repeat(q) + "☆".repeat(5 - q);
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "—";
+      try {
+        return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+      } catch {
+        return iso;
+      }
+    }
+
+    function render(rec, classes) {
+      const loc = rec.location || {};
+      const lat = loc.lat ?? 0;
+      const lng = loc.lng ?? 0;
+      const tags = (rec.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+      const classItems = (classes.items || []).map(c =>
+        `<li>
+          <div>
+            <strong>${esc(c.label)}</strong>
+            <div class="model">${esc(c.model_name)}${c.taxonomy_suggestion ? " · " + esc(c.taxonomy_suggestion) : ""}</div>
+          </div>
+          <span class="conf">${(c.confidence * 100).toFixed(1)}%</span>
+        </li>`
+      ).join("");
+
+      content.innerHTML = `
+        <header class="page-header">
+          <div class="hero-title">${esc(rec.title) || "Untitled"}</div>
+          <div class="hero-object">${esc(rec.source_object) || "—"}</div>
+          <div class="hero-action">${esc(rec.source_action) || ""}</div>
+          ${rec.description ? `<p class="desc">${esc(rec.description)}</p>` : ""}
+          <a class="btn-link" href="/explore">← Back to explore</a>
+        </header>
+
+        <div class="card">
+          <h2>Audio</h2>
+          <audio class="audio-player" id="player" controls preload="metadata"></audio>
+          <img class="spectrogram" id="spec" alt="Spectrogram" />
+        </div>
+
+        ${classItems ? `
+        <div class="card">
+          <h2>Classifications</h2>
+          <ul class="class-list">${classItems}</ul>
+        </div>` : ""}
+
+        <div class="card" id="similarSection">
+          <h2>Similar sounds</h2>
+          <div class="loading" id="similarLoading">Finding acoustically similar recordings…</div>
+          <div id="similarContent" style="display:none"></div>
+        </div>
+
+        <div class="card">
+          <h2>Metadata</h2>
+          <div class="meta-grid">
+            <div class="meta-item"><label>Recorded</label><span>${esc(fmtDate(rec.recorded_at))}</span></div>
+            <div class="meta-item"><label>Taxonomy</label><span>${esc(rec.taxonomy_code) || "—"}</span></div>
+            <div class="meta-item"><label>Location</label><span>${esc(rec.location_name) || "—"}${rec.country_code ? ", " + esc(rec.country_code) : ""}</span></div>
+            <div class="meta-item"><label>Coordinates</label><span class="mono coords">${lat.toFixed(5)}, ${lng.toFixed(5)}</span></div>
+            <div class="meta-item"><label>License</label><span>${esc(rec.license) || "—"}</span></div>
+            <div class="meta-item"><label>Environment</label><span>${esc(rec.environment) || "—"}</span></div>
+            <div class="meta-item"><label>Material</label><span>${esc(rec.material) || "—"}</span></div>
+            <div class="meta-item"><label>Duration</label><span>${rec.duration_s != null ? rec.duration_s.toFixed(1) + " s" : "—"}</span></div>
+            <div class="meta-item"><label>Quality</label><span class="quality">${rec.quality ? stars(rec.quality) + " (" + rec.quality + "/5)" : "—"}</span></div>
+            <div class="meta-item"><label>Contributor</label><span>${esc(rec.contributor_name) || "—"}</span></div>
+            <div class="meta-item"><label>ID</label><span class="mono">${esc(rec.id)}</span></div>
+          </div>
+          ${tags ? `<div style="margin-top:1rem"><label style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">Tags</label><div style="margin-top:0.35rem">${tags}</div></div>` : ""}
+        </div>
+      `;
+
+      const player = document.getElementById("player");
+      const spec = document.getElementById("spec");
+      spec.src = `/v1/recordings/${rec.id}/spectrogram.png`;
+      spec.onerror = () => { spec.style.display = "none"; };
+
+      if (rec.has_audio) {
+        player.src = `/v1/recordings/${rec.id}/audio.mp3`;
+        player.onerror = () => { player.src = `/v1/recordings/${rec.id}/audio.flac`; };
+      } else {
+        player.outerHTML = '<p class="empty" style="padding:1rem">No audio available</p>';
+      }
+
+      loadSimilar(rec.id);
+    }
+
+    async function loadSimilar(recordingId) {
+      const loading = document.getElementById("similarLoading");
+      const content = document.getElementById("similarContent");
+      if (!loading || !content) return;
+
+      try {
+        const res = await fetch(`/v1/recordings/${recordingId}/similar`);
+        if (res.status === 404) {
+          loading.textContent = "Similar sounds not available yet.";
+          return;
+        }
+        if (!res.ok) throw new Error(res.statusText);
+
+        const data = await res.json();
+        const items = data.items || data.hits || data.similar || [];
+        loading.style.display = "none";
+
+        if (!items.length) {
+          content.style.display = "block";
+          content.innerHTML = '<p class="empty" style="padding:1rem">No similar recordings found.</p>';
+          return;
+        }
+
+        content.style.display = "block";
+        content.innerHTML = `
+          <ul class="similar-list">
+            ${items.map(item => {
+              const id = item.id || item.recording_id;
+              const title = item.title || item.source_object || "Untitled";
+              const meta = [item.source_object, item.source_action].filter(Boolean).join(" · ");
+              const score = item.similarity ?? item.score;
+              return `
+                <li>
+                  <div>
+                    <div class="title"><a href="/recording?id=${esc(id)}">${esc(title)}</a></div>
+                    ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+                  </div>
+                  ${score != null ? `<span class="tag">${(Number(score) * 100).toFixed(0)}%</span>` : ""}
+                </li>
+              `;
+            }).join("")}
+          </ul>
+        `;
+      } catch (e) {
+        loading.textContent = "Could not load similar sounds.";
+      }
+    }
+
+    async function load() {
+      const id = new URLSearchParams(location.search).get("id");
+      if (!id) {
+        content.innerHTML = '<div class="error">Missing recording ID — use <code>/recording?id=UUID</code></div>';
+        return;
+      }
+
+      try {
+        const [recRes, clsRes] = await Promise.all([
+          fetch(`/v1/recordings/${id}`),
+          fetch(`/v1/recordings/${id}/classifications`),
+        ]);
+
+        if (recRes.status === 404) {
+          content.innerHTML = '<div class="error">Recording not found</div>';
+          return;
+        }
+        if (!recRes.ok) throw new Error(recRes.statusText);
+
+        const rec = await recRes.json();
+        const classes = clsRes.ok ? await clsRes.json() : { items: [] };
+        render(rec, classes);
+      } catch (e) {
+        content.innerHTML = `<div class="error">Failed to load: ${esc(e.message)}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

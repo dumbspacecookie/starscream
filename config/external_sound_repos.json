@@ -1,0 +1,107 @@
+{
+  "description": "Open acoustic catalogs referenced by Starscream federation harvest. Rows are forked as metadata pointers (external_url) with license enforcement at ingest.",
+  "repos": [
+    {
+      "slug": "xeno-canto",
+      "name": "Xeno-canto",
+      "url": "https://xeno-canto.org",
+      "api": "https://xeno-canto.org/api/3/recordings",
+      "license_default": "CC-BY-NC",
+      "harvest": "live",
+      "content": "Field-recorded birds, bats, frogs, grasshoppers, soundscapes worldwide",
+      "env_key": "XENO_CANTO_API_KEY",
+      "notes": "API v3 requires tagged queries (grp:, cnt:, sp:, etc.) and per-member API key"
+    },
+    {
+      "slug": "inaturalist",
+      "name": "iNaturalist",
+      "url": "https://www.inaturalist.org",
+      "api": "https://api.inaturalist.org/v1/observations",
+      "license_default": "CC-BY / CC0 / CC-BY-NC pointer",
+      "harvest": "live",
+      "content": "Research-grade biodiversity observations with geotagged sounds",
+      "notes": "Uses sound_license filter; NC stored pointer-only"
+    },
+    {
+      "slug": "freesound",
+      "name": "Freesound",
+      "url": "https://freesound.org",
+      "api": "https://freesound.org/apiv2",
+      "license_default": "CC0 / CC-BY",
+      "harvest": "live",
+      "content": "Community field recordings, urban, mechanical, nature (CC0/CC-BY subset)",
+      "env_key": "FREESOUND_API_KEY"
+    },
+    {
+      "slug": "internet-archive",
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "api": "https://archive.org/advancedsearch.php",
+      "license_default": "mixed — CC0/CC-BY download; NC/podcast pointer-only",
+      "harvest": "live",
+      "content": "Field recordings, open audio, CC-licensed podcasts and radio",
+      "notes": "Separate harvest queries for nature/field vs CC podcasts"
+    },
+    {
+      "slug": "noaa",
+      "name": "NOAA PMEL Acoustics",
+      "url": "https://www.pmel.noaa.gov/acoustics",
+      "license_default": "public-domain",
+      "harvest": "live",
+      "content": "Marine mammal, fish, and ocean acoustic field recordings"
+    },
+    {
+      "slug": "nasa",
+      "name": "NASA Space Audio",
+      "url": "https://www.nasa.gov",
+      "license_default": "public-domain",
+      "harvest": "live",
+      "content": "Planetary and spacecraft audio (Voyager, Mars, etc.)"
+    },
+    {
+      "slug": "fsd50k",
+      "name": "FSD50K",
+      "url": "https://zenodo.org/records/4060432",
+      "license_default": "CC-BY",
+      "harvest": "static_import",
+      "content": "50k Freesound-derived clips for sound event detection",
+      "notes": "starscream-import fsd50k — local Zenodo extract required"
+    },
+    {
+      "slug": "esc50",
+      "name": "ESC-50",
+      "url": "https://github.com/karolpiczak/ESC-50",
+      "license_default": "CC-BY-NC",
+      "harvest": "static_import",
+      "content": "50 environmental sound classes (2s clips)",
+      "notes": "Metadata index via starscream-import esc50 --no-audio"
+    },
+    {
+      "slug": "macaulay-library",
+      "name": "Macaulay Library (Cornell)",
+      "url": "https://www.macaulaylibrary.org",
+      "license_default": "varies — mostly NC",
+      "harvest": "reference_only",
+      "content": "World's largest wildlife audio/video archive",
+      "notes": "No public bulk API; link out via iNaturalist/Macaulay cross-refs when present"
+    },
+    {
+      "slug": "gbif",
+      "name": "GBIF",
+      "url": "https://www.gbif.org",
+      "license_default": "dataset-specific",
+      "harvest": "reference_only",
+      "content": "Global biodiversity occurrence records (some with multimedia)",
+      "notes": "Future connector candidate; iNaturalist syndicates to GBIF"
+    },
+    {
+      "slug": "wikimedia-commons",
+      "name": "Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/Category:Audio_files_of_nature",
+      "license_default": "CC-BY / CC-BY-SA / CC0",
+      "harvest": "reference_only",
+      "content": "Nature and field recording audio files",
+      "notes": "Future connector candidate"
+    }
+  ]
+}

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #12151c;
+      --border: #1e2430;
+      --text: #e8eaed;
+      --muted: #8b939f;
+      --accent: #ff6b35;
+      --accent-dim: #c44d20;
+      --ok: #3dd68c;
+      --err: #f87171;
+      --mono: "JetBrains Mono", "Fira Code", monospace;
+      --sans: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    header h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 0.35rem; font-size: 0.95rem; }
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    nav a:hover { border-color: var(--accent); }
+    .search-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .search-bar input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+    }
+    .search-bar input:focus { outline: none; border-color: var(--accent); }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-dim); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      align-items: center;
+    }
+    .filters label { font-size: 0.8rem; color: var(--muted); margin-right: 0.25rem; }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .chip.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.08); }
+    .chip input { display: none; }
+    .filter-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+      width: 7rem;
+    }
+    .meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
+    .results { display: flex; flex-direction: column; gap: 0.75rem; }
+    .hit {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem 1rem;
+      align-items: start;
+    }
+    .hit.playing { border-color: var(--accent); }
+    .hit h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .hit .object { color: var(--accent); font-size: 0.9rem; }
+    .hit .action { color: var(--muted); font-size: 0.85rem; }
+    .hit .tags { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .tag {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .hit .loc { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; }
+    .hit .quality {
+      font-size: 0.8rem;
+      color: var(--ok);
+      margin-top: 0.25rem;
+    }
+    .hit-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
+    .hit-actions button {
+      padding: 0.45rem 0.9rem;
+      font-size: 0.85rem;
+      min-width: 5.5rem;
+    }
+    .hit-actions button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .empty, .error {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+    }
+    .error { color: var(--err); border-color: var(--err); }
+    audio { display: none; }
+    @media (max-width: 600px) {
+      .hit { grid-template-columns: 1fr; }
+      .hit-actions { flex-direction: row; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore" class="active">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Explore <span>sounds</span></h1>
+        <p>Browse the open catalog — search, filter, and preview grounded sounds.</p>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <input type="search" id="query" placeholder="Search title, object, tags, location…" autofocus />
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="filters">
+      <label>Filters</label>
+      <input class="filter-input" id="taxonomy" placeholder="Taxonomy" title="e.g. WILDLIFE.BIRD" />
+      <input class="filter-input" id="country" placeholder="Country" title="ISO code e.g. US" maxlength="2" />
+      <label class="chip" id="contribChip">
+        <input type="checkbox" id="contributionsOnly" /> Contributions only
+      </label>
+    </div>
+
+    <div class="meta" id="meta"></div>
+    <div class="results" id="results"></div>
+    <audio id="player"></audio>
+  </div>
+
+  <script>
+    const queryEl = document.getElementById("query");
+    const resultsEl = document.getElementById("results");
+    const metaEl = document.getElementById("meta");
+    const player = document.getElementById("player");
+    const contribChip = document.getElementById("contribChip");
+    const contribCheck = document.getElementById("contributionsOnly");
+    let activeHit = null;
+
+    contribCheck.addEventListener("change", () => {
+      contribChip.classList.toggle("active", contribCheck.checked);
+    });
+
+    function stars(q) {
+      if (!q) return "";
+      return "★".repeat(q) + "☆".repeat(5 - q);
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s || "";
+      return d.innerHTML;
+    }
+
+    function renderHit(hit) {
+      const div = document.createElement("div");
+      div.className = "hit";
+      div.dataset.id = hit.id;
+      const loc = [hit.location_name, hit.country_code].filter(Boolean).join(", ");
+      const tags = (hit.tags || []).slice(0, 6).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+      div.innerHTML = `
+        <div>
+          <h3>${esc(hit.title) || "Untitled"}</h3>
+          <div class="object">${esc(hit.source_object) || "—"}</div>
+          <div class="action">${esc(hit.source_action) || ""}</div>
+          ${tags ? `<div class="tags">${tags}</div>` : ""}
+          ${loc ? `<div class="loc">${esc(loc)} · ${hit.taxonomy_code || ""}</div>` : `<div class="loc">${esc(hit.taxonomy_code || "")}</div>`}
+          ${hit.quality ? `<div class="quality">${stars(hit.quality)} (${hit.quality}/5)</div>` : ""}
+        </div>
+        <div class="hit-actions">
+          <button class="play-btn">▶ Play</button>
+          <button class="secondary detail-btn">Details</button>
+        </div>
+      `;
+      div.querySelector(".play-btn").addEventListener("click", () => playHit(div, hit.id));
+      div.querySelector(".detail-btn").addEventListener("click", () => {
+        window.open(`/v1/recordings/${hit.id}`, "_blank");
+      });
+      return div;
+    }
+
+    async function playHit(el, id) {
+      if (activeHit) activeHit.classList.remove("playing");
+      activeHit = el;
+      el.classList.add("playing");
+      const btn = el.querySelector(".play-btn");
+      btn.textContent = "…";
+      player.onended = () => { btn.textContent = "▶ Play"; el.classList.remove("playing"); };
+      player.onerror = () => {
+        player.src = `/v1/recordings/${id}/audio.flac`;
+        player.play().catch(() => { btn.textContent = "No audio"; });
+      };
+      player.src = `/v1/recordings/${id}/audio.mp3`;
+      try {
+        await player.play();
+        btn.textContent = "⏸ Pause";
+      } catch {
+        player.src = `/v1/recordings/${id}/audio.flac`;
+        try {
+          await player.play();
+          btn.textContent = "⏸ Pause";
+        } catch {
+          btn.textContent = "No audio";
+        }
+      }
+      btn.onclick = () => {
+        if (player.paused) { player.play(); btn.textContent = "⏸ Pause"; }
+        else { player.pause(); btn.textContent = "▶ Play"; }
+      };
+    }
+
+    async function search() {
+      const q = queryEl.value.trim();
+      const params = new URLSearchParams({ limit: "30" });
+      if (q) params.set("q", q);
+      const tax = document.getElementById("taxonomy").value.trim();
+      const country = document.getElementById("country").value.trim();
+      if (tax) params.set("taxonomy", tax);
+      if (country) params.set("country", country);
+      if (contribCheck.checked) params.set("is_contribution", "true");
+
+      document.getElementById("searchBtn").disabled = true;
+      metaEl.textContent = "Searching…";
+      resultsEl.innerHTML = "";
+
+      try {
+        const res = await fetch(`/v1/search?${params}`);
+        if (res.status === 503) {
+          resultsEl.innerHTML = '<div class="error">Search service unavailable — is Meilisearch running?</div>';
+          metaEl.textContent = "";
+          return;
+        }
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        const hits = data.hits || [];
+        metaEl.textContent = hits.length
+          ? `${data.total ?? hits.length} result(s)${data.processing_time_ms ? ` · ${data.processing_time_ms}ms` : ""}`
+          : q ? "No matches" : "Enter a query or browse with filters";
+        if (!hits.length) {
+          resultsEl.innerHTML = `<div class="empty">${q ? "No sounds match your query." : "Try searching for door, bird, rain…"}</div>`;
+          return;
+        }
+        hits.forEach(h => resultsEl.appendChild(renderHit(h)));
+      } catch (e) {
+        resultsEl.innerHTML = `<div class="error">Search failed: ${esc(e.message)}</div>`;
+        metaEl.textContent = "";
+      } finally {
+        document.getElementById("searchBtn").disabled = false;
+      }
+    }
+
+    document.getElementById("searchBtn").addEventListener("click", search);
+    queryEl.addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+    ["taxonomy", "country"].forEach(id => {
+      document.getElementById(id).addEventListener("change", search);
+    });
+    contribCheck.addEventListener("change", search);
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("q")) { queryEl.value = params.get("q"); search(); }
+  </script>
+</body>
+</html>

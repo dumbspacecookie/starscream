@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "starscream"
+version = "0.1.0"
+description = "The open catalog of all sound on Earth"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "dumbspacecookie" }]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlalchemy>=2.0.36",
+    "geoalchemy2>=0.15.2",
+    "psycopg[binary]>=3.2.3",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.17",
+    "meilisearch>=0.31.0",
+    "boto3>=1.35.0",
+    "librosa>=0.10.2",
+    "numpy>=2.1.0",
+    "soundfile>=0.12.1",
+    "pillow>=11.0.0",
+    "schedule>=1.2.2",
+]
+
+[project.scripts]
+starscream-catalog = "starscream.catalog.cli:main"
+starscream-contrib = "starscream.contrib.cli:main"
+starscream-export = "starscream.export.cli:main"
+starscream-harvest = "starscream.federation.cli:main"
+starscream-import = "starscream.importers.cli:main"
+starscream-mcp = "starscream.mcp.server:main"
+starscream-model-card = "starscream.tools.model_card:main"
+starscream-mqtt = "starscream.sensor.mqtt_subscriber:main"
+
+[project.optional-dependencies]
+ml = [
+    "tensorflow>=2.16.0; python_version < '3.13'",
+    "tensorflow-hub>=0.16.0; python_version < '3.13'",
+]
+export = [
+    "pyarrow>=18.0.0",
+    "datasets>=3.0.0",
+    "pandas>=2.2.0",
+    "huggingface_hub>=0.27.0",
+]
+graphql = [
+    "strawberry-graphql[fastapi]>=0.258.0",
+]
+sensor = [
+    "paho-mqtt>=2.0.0",
+]
+redis = [
+    "redis>=5.0.0",
+]
+mcp = [
+    "mcp>=1.6.0",
+]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.0",
+    "testcontainers>=4.9.0",
+    "docker>=7.0.0",
+    "fakeredis>=2.26.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["starscream"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: end-to-end tests requiring Docker (testcontainers)",
+]

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributors — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" class="active" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+
+  <div class="site-wrap narrow">
+    <header class="page-header">
+      <h1>Contributor <span>accounts</span></h1>
+      <p>Register for an API key to upload sounds and appear on the leaderboard.</p>
+    </header>
+
+    <div class="card">
+      <h2>Register</h2>
+      <form id="registerForm">
+        <div class="form-field">
+          <label>Display name <span class="req">*</span></label>
+          <input name="display_name" required maxlength="256" placeholder="Your name or handle" />
+        </div>
+        <div class="form-field">
+          <label>GitHub username <small>(optional)</small></label>
+          <input name="github_username" maxlength="128" placeholder="octocat" />
+        </div>
+        <button type="submit" class="btn" id="registerBtn">Create contributor account</button>
+      </form>
+      <div id="registerStatus" class="status-box"></div>
+    </div>
+
+    <div class="card">
+      <h2>Profile lookup</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">
+        Look up a contributor by UUID from <code>/v1/contributors/{id}</code>.
+      </p>
+      <form id="lookupForm">
+        <div class="form-field">
+          <label>Contributor UUID</label>
+          <input name="contributor_id" required placeholder="00000000-0000-0000-0000-000000000000" />
+        </div>
+        <button type="submit" class="btn secondary">Look up profile</button>
+      </form>
+      <div id="profileResult"></div>
+    </div>
+  </div>
+
+  <script>
+    const registerForm = document.getElementById("registerForm");
+    const registerStatus = document.getElementById("registerStatus");
+    const profileResult = document.getElementById("profileResult");
+    const registerBtn = document.getElementById("registerBtn");
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "—";
+      try {
+        return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium" });
+      } catch {
+        return iso;
+      }
+    }
+
+    function showRegisterStatus(msg, type, html) {
+      registerStatus.className = "status-box " + type;
+      registerStatus.innerHTML = html || esc(msg);
+    }
+
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = {
+        display_name: registerForm.display_name.value.trim(),
+      };
+      const gh = registerForm.github_username.value.trim();
+      if (gh) body.github_username = gh;
+
+      registerBtn.disabled = true;
+      showRegisterStatus("Registering…", "warn");
+
+      try {
+        const res = await fetch("/v1/contrib/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+
+        if (res.status === 201) {
+          showRegisterStatus("", "ok", `
+            <strong>Account created — save your API key now.</strong>
+            <p style="margin-top:0.5rem;font-size:0.9rem">${esc(data.message || "Store this API key securely — it is shown only once.")}</p>
+            <div class="api-key-reveal">${esc(data.api_key)}</div>
+            <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--muted)">
+              Contributor ID: <span class="mono">${esc(data.contributor_id)}</span>
+            </p>
+          `);
+          registerForm.reset();
+        } else {
+          const detail = data.detail;
+          const err = Array.isArray(detail) ? detail.join("; ") : (detail || res.statusText);
+          showRegisterStatus("Registration failed: " + err, "err");
+        }
+      } catch (err) {
+        showRegisterStatus("Network error: " + err.message, "err");
+      } finally {
+        registerBtn.disabled = false;
+      }
+    });
+
+    document.getElementById("lookupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = e.target.contributor_id.value.trim();
+      profileResult.innerHTML = '<div class="loading" style="margin-top:1rem">Loading profile…</div>';
+
+      try {
+        const res = await fetch(`/v1/contributors/${encodeURIComponent(id)}`);
+        const data = await res.json();
+
+        if (res.status === 404) {
+          profileResult.innerHTML = '<div class="error" style="margin-top:1rem">Contributor not found</div>';
+          return;
+        }
+        if (!res.ok) {
+          const detail = data.detail;
+          const err = Array.isArray(detail) ? detail.join("; ") : (detail || res.statusText);
+          profileResult.innerHTML = `<div class="error" style="margin-top:1rem">${esc(err)}</div>`;
+          return;
+        }
+
+        profileResult.innerHTML = `
+          <div class="meta-grid" style="margin-top:1.25rem">
+            <div class="meta-item"><label>Display name</label><span>${esc(data.display_name)}</span></div>
+            <div class="meta-item"><label>GitHub</label><span>${esc(data.github_username) || "—"}</span></div>
+            <div class="meta-item"><label>Sounds</label><span>${Number(data.sound_count).toLocaleString()}</span></div>
+            <div class="meta-item"><label>Citations</label><span>${Number(data.citations_count).toLocaleString()}</span></div>
+            <div class="meta-item"><label>Joined</label><span>${esc(fmtDate(data.created_at))}</span></div>
+            <div class="meta-item"><label>ID</label><span class="mono">${esc(data.id)}</span></div>
+          </div>
+        `;
+      } catch (err) {
+        profileResult.innerHTML = `<div class="error" style="margin-top:1rem">Failed to load: ${esc(err.message)}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

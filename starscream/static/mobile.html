@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff6b35" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Field Recorder — Starscream</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/static/icon.svg" />
+  <link rel="stylesheet" href="/static/site.css" />
+</head>
+<body class="mobile-body">
+  <nav class="site-nav mobile-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload">Contribute</a>
+      <a href="/mobile" class="active">Mobile</a>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+
+  <main class="mobile-wrap">
+    <header class="mobile-header">
+      <h1>Field <span>recorder</span></h1>
+      <p>Tap to capture raw sound with GPS. Queued offline, synced to Starscream when online.</p>
+    </header>
+
+    <div class="mobile-status-bar" id="connStatus">
+      <span class="dot" id="connDot"></span>
+      <span id="connLabel">Checking connection…</span>
+      <span class="queue-badge" id="queueBadge" hidden></span>
+    </div>
+
+    <section class="card mobile-record-card">
+      <button type="button" class="record-btn" id="recordBtn" aria-label="Tap to record">
+        <span class="record-ring"></span>
+        <span class="record-label" id="recordLabel">Tap to record</span>
+        <span class="record-timer" id="recordTimer" hidden>0:00</span>
+      </button>
+      <p class="mobile-hint" id="recordHint">Hold still — mic captures unprocessed audio for the corpus.</p>
+    </section>
+
+    <form id="manifestForm" class="card mobile-form">
+      <h2>Manifest</h2>
+      <div class="form-field">
+        <label>Title <span class="req">*</span></label>
+        <input name="title" required placeholder="Morning robin in oak canopy" />
+      </div>
+      <div class="form-field">
+        <label>Source object <span class="req">*</span></label>
+        <input name="source_object" required placeholder="American robin" />
+      </div>
+      <div class="form-field">
+        <label>Source action <span class="req">*</span></label>
+        <input name="source_action" required placeholder="singing at dawn" />
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Object category <span class="req">*</span></label>
+          <input name="wm_object_category" required placeholder="wildlife" />
+        </div>
+        <div class="form-field">
+          <label>Interaction <span class="req">*</span></label>
+          <input name="wm_interaction_type" required placeholder="vocalization" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>License</label>
+          <select name="license">
+            <option value="CC0">CC0</option>
+            <option value="CC-BY">CC-BY</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Environment</label>
+          <select name="environment">
+            <option value="outdoor">Outdoor</option>
+            <option value="indoor">Indoor</option>
+            <option value="unknown">Unknown</option>
+            <option value="vehicle">Vehicle</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Tags <small>(comma-separated)</small></label>
+        <input name="tags" placeholder="bird, dawn, forest" />
+      </div>
+      <div class="auto-fields">
+        <div><span>GPS</span> <strong id="gpsDisplay">—</strong></div>
+        <div><span>Recorded</span> <strong id="timeDisplay">—</strong></div>
+      </div>
+      <input type="hidden" name="lat" />
+      <input type="hidden" name="lng" />
+      <input type="hidden" name="recorded_at" />
+    </form>
+
+    <section class="card mobile-queue-card">
+      <div class="queue-header">
+        <h2>Offline queue</h2>
+        <button type="button" class="btn secondary" id="syncBtn" disabled>Sync now</button>
+      </div>
+      <ul class="queue-list" id="queueList">
+        <li class="queue-empty">No pending recordings</li>
+      </ul>
+    </section>
+
+    <div class="status-box" id="status"></div>
+  </main>
+
+  <script>
+    const QUEUE_KEY = "starscream_mobile_queue";
+    const form = document.getElementById("manifestForm");
+    const recordBtn = document.getElementById("recordBtn");
+    const recordLabel = document.getElementById("recordLabel");
+    const recordTimer = document.getElementById("recordTimer");
+    const recordHint = document.getElementById("recordHint");
+    const statusEl = document.getElementById("status");
+    const queueList = document.getElementById("queueList");
+    const syncBtn = document.getElementById("syncBtn");
+    const connDot = document.getElementById("connDot");
+    const connLabel = document.getElementById("connLabel");
+    const queueBadge = document.getElementById("queueBadge");
+    const gpsDisplay = document.getElementById("gpsDisplay");
+    const timeDisplay = document.getElementById("timeDisplay");
+
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let chunks = [];
+    let timerInterval = null;
+    let recordStartedAt = null;
+    let gpsCoords = null;
+
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = "status-box " + (type || "");
+    }
+
+    function loadQueue() {
+      try {
+        return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveQueue(queue) {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    }
+
+    function uuid() {
+      return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+    }
+
+    function updateConnectionUI() {
+      const online = navigator.onLine;
+      connDot.className = "dot " + (online ? "online" : "offline");
+      connLabel.textContent = online ? "Online — uploads enabled" : "Offline — recordings queued locally";
+      const pending = loadQueue().filter((q) => q.status !== "synced").length;
+      syncBtn.disabled = !online || pending === 0;
+      if (pending > 0) {
+        queueBadge.hidden = false;
+        queueBadge.textContent = pending + " pending";
+      } else {
+        queueBadge.hidden = true;
+      }
+    }
+
+    function renderQueue() {
+      const queue = loadQueue().filter((q) => q.status !== "synced");
+      if (!queue.length) {
+        queueList.innerHTML = '<li class="queue-empty">No pending recordings</li>';
+        updateConnectionUI();
+        return;
+      }
+      queueList.innerHTML = queue.map((item) => {
+        const err = item.error ? `<small class="queue-err">${item.error}</small>` : "";
+        return `<li>
+          <div>
+            <strong>${escapeHtml(item.manifest.title || "Untitled")}</strong>
+            <small>${new Date(item.createdAt).toLocaleString()}</small>
+            ${err}
+          </div>
+          <span class="queue-state ${item.status}">${item.status}</span>
+        </li>`;
+      }).join("");
+      updateConnectionUI();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function refreshAutoFields() {
+      if (gpsCoords) {
+        form.lat.value = gpsCoords.lat;
+        form.lng.value = gpsCoords.lng;
+        gpsDisplay.textContent = `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+      }
+      if (form.recorded_at.value) {
+        timeDisplay.textContent = new Date(form.recorded_at.value).toLocaleString();
+      }
+    }
+
+    function fetchGps() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          refreshAutoFields();
+        },
+        () => {
+          gpsDisplay.textContent = "Unavailable";
+        },
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
+    }
+
+    function pickMimeType() {
+      const types = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/mp4",
+      ];
+      return types.find((t) => MediaRecorder.isTypeSupported(t)) || "";
+    }
+
+    function formatTimer(ms) {
+      const total = Math.floor(ms / 1000);
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${m}:${String(s).padStart(2, "0")}`;
+    }
+
+    async function startRecording() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        showStatus("Microphone not supported on this device", "err");
+        return;
+      }
+      if (!form.reportValidity()) return;
+
+      recordStartedAt = new Date();
+      form.recorded_at.value = recordStartedAt.toISOString();
+      if (!form.title.value.trim()) {
+        form.title.value = `Field recording ${recordStartedAt.toISOString().slice(0, 16).replace("T", " ")}`;
+      }
+      fetchGps();
+      refreshAutoFields();
+
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = pickMimeType();
+        chunks = [];
+        mediaRecorder = mimeType
+          ? new MediaRecorder(mediaStream, { mimeType })
+          : new MediaRecorder(mediaStream);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => finishRecording();
+        mediaRecorder.start(250);
+
+        recordBtn.classList.add("recording");
+        recordLabel.textContent = "Tap to stop";
+        recordTimer.hidden = false;
+        recordHint.textContent = "Recording… tap again to stop and queue.";
+        const started = Date.now();
+        timerInterval = setInterval(() => {
+          recordTimer.textContent = formatTimer(Date.now() - started);
+        }, 250);
+      } catch (err) {
+        showStatus("Mic access denied: " + err.message, "err");
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      recordBtn.classList.remove("recording");
+      recordLabel.textContent = "Tap to record";
+      recordTimer.hidden = true;
+      recordHint.textContent = "Converting to WAV and saving to queue…";
+    }
+
+    async function finishRecording() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+        mediaStream = null;
+      }
+      if (!chunks.length) {
+        showStatus("No audio captured", "err");
+        recordHint.textContent = "Hold still — mic captures unprocessed audio for the corpus.";
+        return;
+      }
+
+      const blob = new Blob(chunks, { type: chunks[0].type || "audio/webm" });
+      chunks = [];
+
+      try {
+        const wavBlob = await blobToWav(blob);
+        const stamp = recordStartedAt.toISOString().replace(/[:.]/g, "-");
+        const filename = `field_${stamp}.wav`;
+        const manifest = buildManifest(filename, wavBlob);
+        const queue = loadQueue();
+        queue.push({
+          id: uuid(),
+          manifest,
+          audioBase64: await blobToBase64(wavBlob),
+          filename,
+          createdAt: new Date().toISOString(),
+          status: "pending",
+          error: null,
+        });
+        saveQueue(queue);
+        renderQueue();
+        showStatus("Saved to offline queue", "ok");
+        if (navigator.onLine) syncQueue();
+      } catch (err) {
+        showStatus("Could not process recording: " + err.message, "err");
+      } finally {
+        recordHint.textContent = "Hold still — mic captures unprocessed audio for the corpus.";
+      }
+    }
+
+    function buildManifest(filename, wavBlob) {
+      const tags = (form.tags.value || "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const lat = parseFloat(form.lat.value);
+      const lng = parseFloat(form.lng.value);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) {
+        throw new Error("GPS required — enable location and try again");
+      }
+      return {
+        title: form.title.value.trim(),
+        source_object: form.source_object.value.trim(),
+        source_action: form.source_action.value.trim(),
+        recorded_at: form.recorded_at.value,
+        location: { lat, lng, name: null, country_code: null },
+        license: form.license.value,
+        audio_filename: filename,
+        taxonomy_code: "NATURAL",
+        tags,
+        environment: form.environment.value,
+        recorder_type: "smartphone",
+        recorder_model: navigator.userAgent.slice(0, 120),
+        physical_properties: {
+          object_category: form.wm_object_category.value.trim(),
+          interaction_type: form.wm_interaction_type.value.trim(),
+        },
+      };
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function base64ToBlob(base64, mime) {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+
+    async function blobToWav(blob) {
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioContext = new AudioContext();
+      try {
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        return encodeWav(audioBuffer);
+      } finally {
+        await audioContext.close();
+      }
+    }
+
+    function encodeWav(audioBuffer) {
+      const numChannels = audioBuffer.numberOfChannels;
+      const sampleRate = audioBuffer.sampleRate;
+      const bitsPerSample = 16;
+      const blockAlign = (numChannels * bitsPerSample) / 8;
+      const dataLength = audioBuffer.length * blockAlign;
+      const buffer = new ArrayBuffer(44 + dataLength);
+      const view = new DataView(buffer);
+
+      writeString(view, 0, "RIFF");
+      view.setUint32(4, 36 + dataLength, true);
+      writeString(view, 8, "WAVE");
+      writeString(view, 12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * blockAlign, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeString(view, 36, "data");
+      view.setUint32(40, dataLength, true);
+
+      let offset = 44;
+      for (let i = 0; i < audioBuffer.length; i += 1) {
+        for (let ch = 0; ch < numChannels; ch += 1) {
+          const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(ch)[i]));
+          view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+          offset += 2;
+        }
+      }
+      return new Blob([buffer], { type: "audio/wav" });
+    }
+
+    function writeString(view, offset, str) {
+      for (let i = 0; i < str.length; i += 1) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+      }
+    }
+
+    async function syncQueue() {
+      if (!navigator.onLine) return;
+      const queue = loadQueue();
+      let changed = false;
+
+      for (const item of queue) {
+        if (item.status === "synced") continue;
+        item.status = "uploading";
+        renderQueue();
+
+        const body = new FormData();
+        body.append("manifest_json", JSON.stringify(item.manifest));
+        body.append("audio", base64ToBlob(item.audioBase64, "audio/wav"), item.filename);
+
+        try {
+          const res = await fetch("/v1/contrib/upload", { method: "POST", body });
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 201) {
+            item.status = "synced";
+            item.error = null;
+            changed = true;
+          } else {
+            item.status = "failed";
+            const detail = data.detail;
+            item.error = Array.isArray(detail) ? detail.join("; ") : (detail || res.statusText);
+            changed = true;
+          }
+        } catch (err) {
+          item.status = "failed";
+          item.error = err.message;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        const remaining = queue.filter((q) => q.status !== "synced");
+        saveQueue(remaining);
+      }
+      renderQueue();
+    }
+
+    recordBtn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    syncBtn.addEventListener("click", () => {
+      showStatus("Syncing queue…", "warn");
+      syncQueue().then(() => {
+        const pending = loadQueue().length;
+        showStatus(pending ? `${pending} item(s) still pending` : "Queue synced", pending ? "warn" : "ok");
+      });
+    });
+
+    window.addEventListener("online", () => {
+      updateConnectionUI();
+      syncQueue();
+    });
+    window.addEventListener("offline", updateConnectionUI);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+
+    fetchGps();
+    renderQueue();
+    updateConnectionUI();
+  </script>
+</body>
+</html>

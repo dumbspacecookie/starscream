@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contribute — Starscream</title>
+  <link rel="stylesheet" href="/static/site.css" />
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #12151c;
+      --border: #1e2430;
+      --text: #e8eaed;
+      --muted: #8b939f;
+      --accent: #ff6b35;
+      --accent-dim: #c44d20;
+      --ok: #3dd68c;
+      --err: #f87171;
+      --mono: "JetBrains Mono", "Fira Code", monospace;
+      --sans: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 0.5rem; font-size: 0.95rem; }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    nav a:hover { border-color: var(--accent); }
+    nav a.active { border-color: var(--accent); background: rgba(255,107,53,0.08); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: 0.85rem; margin-bottom: 0.35rem; color: var(--muted); }
+    label .req { color: var(--accent); }
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.6rem 0.75rem;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    .drop {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 1rem;
+    }
+    .drop:hover, .drop.over { border-color: var(--accent); background: rgba(255,107,53,0.05); }
+    .drop strong { display: block; margin-bottom: 0.25rem; }
+    .drop small { color: var(--muted); }
+    .drop .file-name { color: var(--ok); font-family: var(--mono); font-size: 0.85rem; margin-top: 0.5rem; }
+    .tags-hint { font-size: 0.8rem; color: var(--muted); margin-top: -0.5rem; margin-bottom: 1rem; }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-dim); }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.secondary:hover { border-color: var(--muted); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.ok { display: block; background: rgba(61,214,140,0.12); border: 1px solid var(--ok); color: var(--ok); }
+    #status.err { display: block; background: rgba(248,113,113,0.12); border: 1px solid var(--err); color: var(--err); }
+    #status.warn { display: block; background: rgba(255,107,53,0.1); border: 1px solid var(--accent); color: var(--accent); }
+    #similarWarn {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    #similarWarn.visible { display: block; }
+    #similarWarn strong { color: var(--accent); display: block; margin-bottom: 0.35rem; }
+    #similarWarn ul { margin: 0.35rem 0 0 1.25rem; font-size: 0.85rem; }
+    .guidelines { font-size: 0.85rem; color: var(--muted); }
+    .guidelines ul { margin: 0.5rem 0 0 1.25rem; }
+    .guidelines li { margin-bottom: 0.25rem; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/explore" class="site-nav-brand">Star<span>scream</span></a>
+    <div class="site-nav-links">
+      <a href="/explore">Explore</a>
+      <a href="/upload" class="active">Contribute</a>
+      <a href="/mobile">Mobile</a>
+      <div class="site-nav-dropdown">
+        <button type="button" class="site-nav-dropdown-btn" aria-haspopup="true">Community ▾</button>
+        <div class="site-nav-dropdown-menu" role="menu">
+          <a href="/contributors-page" role="menuitem">Contributors</a>
+          <a href="/leaderboard" role="menuitem">Leaderboard</a>
+          <a href="/batch" role="menuitem">Batch upload</a>
+        </div>
+      </div>
+      <a href="/stats">Stats</a>
+    </div>
+  </nav>
+  <div class="wrap">
+    <header>
+      <h1>Contribute a <span>sound</span></h1>
+      <p>Raw audio linked to what produced it, what happened, and where.</p>
+    </header>
+
+    <form id="form">
+      <div class="card">
+        <h2>Audio (required)</h2>
+        <div class="drop" id="drop">
+          <strong>Drop raw WAV / FLAC / AIFF here</strong>
+          <small>≥44.1 kHz · ≥16-bit · no processing or compression</small>
+          <div class="file-name" id="fileLabel"></div>
+        </div>
+        <input type="file" id="audio" accept=".wav,.flac,.aiff,.aif" hidden />
+      </div>
+
+      <div class="card">
+        <h2>What is this sound?</h2>
+        <label>Title <span class="req">*</span></label>
+        <input name="title" required placeholder="Oak hallway door closing with latch" />
+
+        <label>Source object <span class="req">*</span> <small>(what produced it)</small></label>
+        <input name="source_object" required placeholder="solid oak interior door with brass latch" />
+
+        <label>Source action <span class="req">*</span> <small>(what happened)</small></label>
+        <input name="source_action" required placeholder="closing from half-open, latch clicking into frame" />
+
+        <label>Description</label>
+        <textarea name="description" placeholder="Recording context, mic placement, why this matters…"></textarea>
+
+        <label>Tags <small>(comma-separated)</small></label>
+        <input name="tags" placeholder="door, wood, latch, indoor, impact" />
+        <p class="tags-hint">Tags help researchers and world models find and cluster sounds.</p>
+      </div>
+
+      <div class="card">
+        <h2>When &amp; where</h2>
+        <div class="row">
+          <div>
+            <label>Recorded at (UTC) <span class="req">*</span></label>
+            <input name="recorded_at" type="datetime-local" required />
+          </div>
+          <div>
+            <label>License <span class="req">*</span></label>
+            <select name="license" required>
+              <option value="CC0">CC0 — public domain (preferred)</option>
+              <option value="CC-BY">CC-BY — attribution required</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Latitude <span class="req">*</span></label>
+            <input name="lat" type="number" step="any" required placeholder="40.758" />
+          </div>
+          <div>
+            <label>Longitude <span class="req">*</span></label>
+            <input name="lng" type="number" step="any" required placeholder="-73.9855" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Place name</label>
+            <input name="location_name" placeholder="Manhattan apartment hallway" />
+          </div>
+          <div>
+            <label>Country code</label>
+            <input name="country_code" maxlength="2" placeholder="US" />
+          </div>
+        </div>
+        <button type="button" class="secondary" id="geoBtn" style="margin-bottom:1rem">Use my location</button>
+      </div>
+
+      <div class="card">
+        <h2>Physical grounding</h2>
+        <div class="row">
+          <div>
+            <label>Taxonomy</label>
+            <select name="taxonomy_code">
+              <option value="URBAN">URBAN</option>
+              <option value="URBAN.TRAFFIC">URBAN.TRAFFIC</option>
+              <option value="URBAN.CROWD">URBAN.CROWD</option>
+              <option value="WILDLIFE.BIRD">WILDLIFE.BIRD</option>
+              <option value="WILDLIFE.MAMMAL">WILDLIFE.MAMMAL</option>
+              <option value="WILDLIFE.INSECT">WILDLIFE.INSECT</option>
+              <option value="NATURAL.FOREST">NATURAL.FOREST</option>
+              <option value="NATURAL.OCEAN">NATURAL.OCEAN</option>
+              <option value="ATMOSPHERIC.RAIN">ATMOSPHERIC.RAIN</option>
+              <option value="ATMOSPHERIC.THUNDER">ATMOSPHERIC.THUNDER</option>
+              <option value="CULTURAL">CULTURAL</option>
+              <option value="MECHANICAL">MECHANICAL</option>
+            </select>
+          </div>
+          <div>
+            <label>Material</label>
+            <input name="material" placeholder="wood, metal, glass, water…" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Environment</label>
+            <select name="environment">
+              <option value="unknown">Unknown</option>
+              <option value="indoor">Indoor</option>
+              <option value="outdoor">Outdoor</option>
+              <option value="underwater">Underwater</option>
+              <option value="vehicle">Vehicle</option>
+              <option value="mixed">Mixed</option>
+            </select>
+          </div>
+          <div>
+            <label>Distance to source (m)</label>
+            <input name="distance_m" type="number" step="any" min="0" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Object category <span class="req">*</span></label>
+            <input name="wm_object_category" required placeholder="furniture, wildlife, vehicle, tool…" />
+          </div>
+          <div>
+            <label>Interaction type <span class="req">*</span></label>
+            <input name="wm_interaction_type" required placeholder="impact, friction, vocalization, flow…" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Estimated size</label>
+            <input name="wm_estimated_size" placeholder="tiny, small, medium, large" />
+          </div>
+          <div>
+            <label>Force level</label>
+            <input name="wm_force_level" placeholder="gentle, moderate, forceful" />
+          </div>
+        </div>
+        <label>Your name (for CC-BY attribution)</label>
+        <input name="contributor_name" placeholder="Optional" />
+      </div>
+
+      <div class="card guidelines">
+        <h2>Guidelines</h2>
+        <ul>
+          <li>Submit <strong>raw, unprocessed</strong> audio only — no MP3, no edits</li>
+          <li>Be specific: <em>what object</em> and <em>what action</em>, not vague labels</li>
+          <li>Every sound helps world models learn physical causality</li>
+        </ul>
+        <p style="margin-top:0.75rem"><a href="/docs/CONTRIBUTING.md" target="_blank">Full contribution guide</a></p>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="submitBtn">Upload contribution</button>
+        <button type="button" class="secondary" id="validateBtn">Validate only</button>
+      </div>
+      <div id="similarWarn"></div>
+      <div id="status"></div>
+    </form>
+  </div>
+
+  <script>
+    const drop = document.getElementById("drop");
+    const audioInput = document.getElementById("audio");
+    const fileLabel = document.getElementById("fileLabel");
+    const form = document.getElementById("form");
+    const status = document.getElementById("status");
+    const similarWarn = document.getElementById("similarWarn");
+    let similarTimer = null;
+
+    drop.addEventListener("click", () => audioInput.click());
+    drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+    drop.addEventListener("drop", e => {
+      e.preventDefault();
+      drop.classList.remove("over");
+      if (e.dataTransfer.files.length) {
+        audioInput.files = e.dataTransfer.files;
+        fileLabel.textContent = e.dataTransfer.files[0].name;
+      }
+    });
+    audioInput.addEventListener("change", () => {
+      fileLabel.textContent = audioInput.files[0]?.name || "";
+    });
+
+    document.getElementById("geoBtn").addEventListener("click", () => {
+      if (!navigator.geolocation) return showStatus("Geolocation not supported", "err");
+      navigator.geolocation.getCurrentPosition(pos => {
+        form.lat.value = pos.coords.latitude.toFixed(6);
+        form.lng.value = pos.coords.longitude.toFixed(6);
+        showStatus("Location filled from GPS", "ok");
+      }, () => showStatus("Could not get location", "err"));
+    });
+
+    function buildManifest() {
+      const f = form;
+      const tags = (f.tags.value || "").split(",").map(t => t.trim()).filter(Boolean);
+      const recorded = f.recorded_at.value;
+      return {
+        title: f.title.value,
+        source_object: f.source_object.value,
+        source_action: f.source_action.value,
+        description: f.description.value || null,
+        recorded_at: recorded ? new Date(recorded).toISOString() : null,
+        location: {
+          lat: parseFloat(f.lat.value),
+          lng: parseFloat(f.lng.value),
+          name: f.location_name.value || null,
+          country_code: f.country_code.value || null,
+        },
+        license: f.license.value,
+        audio_filename: audioInput.files[0]?.name || "audio.wav",
+        taxonomy_code: f.taxonomy_code.value,
+        tags,
+        material: f.material.value || null,
+        environment: f.environment.value,
+        distance_m: f.distance_m.value ? parseFloat(f.distance_m.value) : null,
+        contributor_name: f.contributor_name.value || null,
+        physical_properties: {
+          object_category: f.wm_object_category.value,
+          interaction_type: f.wm_interaction_type.value,
+          estimated_size: f.wm_estimated_size.value || null,
+          force_level: f.wm_force_level.value || null,
+        },
+      };
+    }
+
+    function showStatus(msg, type, extra) {
+      status.className = type;
+      status.innerHTML = msg + (extra ? "<br><small>" + extra + "</small>" : "");
+    }
+
+    async function checkSimilarSounds() {
+      const q = (form.source_object.value || "").trim();
+      if (q.length < 3) {
+        similarWarn.classList.remove("visible");
+        return;
+      }
+      try {
+        const res = await fetch(`/v1/search?q=${encodeURIComponent(q)}&limit=5`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const hits = (data.hits || []).filter(h => h.title || h.source_object);
+        if (!hits.length) {
+          similarWarn.classList.remove("visible");
+          return;
+        }
+        const items = hits.slice(0, 4).map(h =>
+          `<li>${(h.title || h.source_object || "Untitled").replace(/</g, "&lt;")}</li>`
+        ).join("");
+        similarWarn.innerHTML =
+          `<strong>Similar sounds already in corpus</strong>` +
+          `<span>Not blocking — verify your recording adds something new.</span><ul>${items}</ul>`;
+        similarWarn.classList.add("visible");
+      } catch {
+        similarWarn.classList.remove("visible");
+      }
+    }
+
+    const sourceObjectInput = form.source_object;
+
+    sourceObjectInput.addEventListener("input", () => {
+      clearTimeout(similarTimer);
+      similarTimer = setTimeout(checkSimilarSounds, 500);
+    });
+    sourceObjectInput.addEventListener("blur", () => {
+      clearTimeout(similarTimer);
+      checkSimilarSounds();
+    });
+
+    async function submit(validateOnly) {
+      if (!audioInput.files[0]) return showStatus("Select a raw audio file first", "err");
+      const manifest = buildManifest();
+      if (!manifest.recorded_at) return showStatus("Set recording date/time", "err");
+
+      if (validateOnly) await checkSimilarSounds();
+
+      const body = new FormData();
+      body.append("manifest_json", JSON.stringify(manifest));
+      body.append("audio", audioInput.files[0]);
+
+      const url = validateOnly ? "/v1/contrib/validate" : "/v1/contrib/upload";
+      const btn = validateOnly ? document.getElementById("validateBtn") : document.getElementById("submitBtn");
+      btn.disabled = true;
+      showStatus(validateOnly ? "Validating…" : "Uploading…", "warn");
+
+      try {
+        const res = await fetch(url, { method: "POST", body });
+        const data = await res.json();
+        if (validateOnly) {
+          if (data.valid) {
+            let msg = "Valid — ready to upload";
+            if (data.warnings?.length) msg += "<br>Warnings: " + data.warnings.join("; ");
+            showStatus(msg, "ok");
+            await checkSimilarSounds();
+          } else {
+            showStatus("Invalid: " + (data.errors || []).join("; "), "err");
+          }
+        } else if (res.status === 201) {
+          showStatus("Uploaded! ID: " + data.recording.id, "ok", data.recording.title);
+        } else {
+          const detail = data.detail;
+          const err = Array.isArray(detail) ? detail.join("; ") : (typeof detail === "object" ? JSON.stringify(detail) : detail);
+          showStatus("Upload failed: " + (err || res.statusText), "err");
+        }
+      } catch (e) {
+        showStatus("Network error: " + e.message, "err");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    form.addEventListener("submit", e => { e.preventDefault(); submit(false); });
+    document.getElementById("validateBtn").addEventListener("click", () => submit(true));
+  </script>
+</body>
+</html>

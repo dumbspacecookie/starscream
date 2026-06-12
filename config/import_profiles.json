@@ -1,0 +1,37 @@
+{
+  "esc50_metadata": {
+    "description": "ESC-50 labels only (no audio copy)",
+    "imports": [
+      {
+        "importer": "esc50",
+        "csv": "CHANGE_ME/ESC-50/meta/esc50.csv",
+        "args": ["--no-audio"]
+      }
+    ]
+  },
+  "fsd50k_dev_sample": {
+    "description": "FSD50K dev split, 500 rows, metadata only",
+    "imports": [
+      {
+        "importer": "fsd50k",
+        "csv": "CHANGE_ME/FSD50K/FSD50K.metadata/dev.csv",
+        "args": ["--no-audio", "--limit", "500", "--split", "dev"]
+      }
+    ]
+  },
+  "static_datasets_light": {
+    "description": "ESC-50 + FSD50K sample for catalog smoke test",
+    "imports": [
+      {
+        "importer": "esc50",
+        "csv": "CHANGE_ME/ESC-50/meta/esc50.csv",
+        "args": ["--no-audio"]
+      },
+      {
+        "importer": "fsd50k",
+        "csv": "CHANGE_ME/FSD50K/FSD50K.metadata/dev.csv",
+        "args": ["--no-audio", "--limit", "200"]
+      }
+    ]
+  }
+}

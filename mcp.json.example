@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "starscream": {
+      "command": "python",
+      "args": ["-m", "starscream.mcp.server"],
+      "cwd": ".",
+      "env": {
+        "STARSCREAM_CATALOG_PATH": "./corpus/dataset.jsonl"
+      }
+    }
+  }
+}
