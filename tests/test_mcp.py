@@ -1,4 +1,5 @@
 import json
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -95,6 +96,16 @@ def test_catalog_stats_total():
     parsed = json.loads(result)
     assert isinstance(parsed, dict)
     assert parsed["total"] == 3
+
+
+def test_dev_optional_dependencies_include_mcp():
+    # REQ: STARSCREAM-1016-S1/AC-4
+    pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    dev_deps = data["project"]["optional-dependencies"]["dev"]
+    assert any(
+        dep.replace(" ", "").startswith("mcp>=1.6.0") for dep in dev_deps
+    ), "dev optional-dependencies must include mcp>=1.6.0 so tests/test_mcp.py is collected under CI .[dev]"
 
 
 def test_catalog_list_redistributable():
