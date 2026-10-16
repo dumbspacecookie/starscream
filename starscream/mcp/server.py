@@ -26,14 +26,14 @@ mcp = FastMCP(
     ),
 )
 
-_catalog: Catalog | None = None
+_catalog_cache: Catalog | None = None
 
 
 def _catalog() -> Catalog:
-    global _catalog
-    if _catalog is None:
-        _catalog = Catalog.load(os.environ.get("STARSCREAM_CATALOG_PATH"))
-    return _catalog
+    global _catalog_cache
+    if _catalog_cache is None:
+        _catalog_cache = Catalog.load(os.environ.get("STARSCREAM_CATALOG_PATH"))
+    return _catalog_cache
 
 
 @mcp.tool()
